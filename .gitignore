@@ -1,2 +1,7 @@
 __pycache__/
 video/preview/
+node_modules/
+video/v4/render.log
+video/v4/_audio.wav
+video/v4/preview/
+video/v3/preview/
