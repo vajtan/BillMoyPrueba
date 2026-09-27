@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LA LEYENDA DE VAJTAN - v2 (vertical 9:16, 1080x1920, 2:55)
+HISTORIA Y AVENTURAS DE VAJTAN, EL SUPER NENE - v2 (vertical 9:16, 1080x1920, 2:55)
 Historia real contada por el propio Vajtan. Pixel art "pintado" 100% procedural:
 escenarios con ruido+paletas+tramado, personajes articulados, fuente bitmap,
 musica chiptune y "pi-pi-pi" sintetizados. Sin APIs ni imagenes externas.
@@ -25,7 +25,9 @@ UW, UH = 270, 480          # capa de interfaz (x4)
 FPS = 24
 TARGET = 175.0
 GY = 516                   # suelo de los personajes (arte)
-BOX = 396                  # caja de dialogo (UI)
+BOX = 276                  # caja de dialogo (UI), dentro de la zona segura de redes
+TOP = 58                   # margen superior de la UI (barra de la app)
+NAVY = (10, 12, 30)
 OUT = os.path.join(os.path.dirname(HERE), "vajtan_historia_9x16.mp4")
 CPS, HOLD = 31.0, 1.05
 
@@ -54,7 +56,7 @@ def C(img, x, y, L, pose='stand', t=0.0, f=1, sh=True, **kw):
 
 
 # ================================================================ UI
-def wrap(s, n=35):
+def wrap(s, n=29):
     words, lines, cur = s.split(' '), [], ''
     for w_ in words:
         if len(cur) + len(w_) + (1 if cur else 0) > n:
@@ -70,7 +72,7 @@ class Line:
     def __init__(self, who, txt, start):
         self.who, self.start = who, start
         self.lines = wrap(txt.upper())
-        assert len(self.lines) <= 4, txt
+        assert len(self.lines) <= 5, txt
         self.flat = ' '.join(self.lines)
         self.times = []
         tt = start + 0.2
@@ -89,14 +91,14 @@ class Line:
 
 def draw_box(d, ln, t):
     y0 = BOX
-    R(d, 4, y0, 262, 80, WHITE)
-    R(d, 5, y0 + 1, 260, 78, (70, 80, 140))
-    R(d, 6, y0 + 2, 258, 76, (14, 20, 52))
-    for yy in range(y0 + 2, y0 + 78, 2):
-        R(d, 6, yy, 258, 1, (18, 26, 62))
+    R(d, 6, y0, 226, 92, WHITE)
+    R(d, 7, y0 + 1, 224, 90, (70, 80, 140))
+    R(d, 8, y0 + 2, 222, 88, (14, 20, 52))
+    for yy in range(y0 + 2, y0 + 90, 2):
+        R(d, 8, yy, 222, 1, (18, 26, 62))
     n = ln.shown(t)
     talking = n < len(ln.flat)
-    portrait(d, 11, y0 + 20, ln.who, talking, t)
+    portrait(d, 13, y0 + 20, ln.who, talking, t)
     text(d, 50, y0 + 3, CH.NAMES.get(ln.who, ln.who), GOLD, shadow=BLK)
     k = 0
     for li, line in enumerate(ln.lines):
@@ -104,7 +106,7 @@ def draw_box(d, ln, t):
         k += len(line) + 1
     if not talking and int(t * 3) % 2 == 0:
         for i in range(4):
-            R(d, 253 + i, y0 + 68 + i, 7 - 2 * i, 1, GOLD)
+            R(d, 219 + i, y0 + 82 + i, 7 - 2 * i, 1, GOLD)
 
 
 def banner(d, s, y=6, x=None):
@@ -154,6 +156,7 @@ class Scene:
     music = 'title'
     delays = {}
     box = True
+    SH = 148          # sube el arte para centrar la accion en vertical
 
     def schedule(self, t0):
         self.t0 = t0
@@ -189,9 +192,11 @@ class Scene:
         art = self.bg.copy()
         ad = ImageDraw.Draw(art)
         self.draw(art, ad, t)
+        top = Image.new('RGBA', (UW, UH), (0, 0, 0, 0))
+        self.ui(top, ImageDraw.Draw(top), t)
         ui = Image.new('RGBA', (UW, UH), (0, 0, 0, 0))
+        ui.paste(top, (0, TOP))
         ud = ImageDraw.Draw(ui)
-        self.ui(ui, ud, t)
         ln = self.cur(t)
         if ln is not None and self.box and self.show_box(t):
             draw_box(ud, ln, t)
@@ -282,6 +287,7 @@ class Title(Scene):
     music = 'title'
     min_dur = 5.6
     box = False
+    SH = 0
 
     def setup(self):
         self.bg = cliff_bg()
@@ -297,13 +303,13 @@ class Title(Scene):
 
     def ui(self, u, d, t):
         bob = int(round(math.sin(t * 2.2) * 2))
-        text_c(d, UW // 2, 14, "LA LEYENDA DE", WHITE, 1, (30, 60, 90))
-        text_c(d, UW // 2, 28 + bob, "VAJTAN", GOLD, 5, (110, 40, 0))
-        text_c(d, UW // 2, 78 + bob, "SHANAVA", (255, 120, 60), 2, (80, 10, 0))
-        text_c(d, UW // 2, 102, "UNA HISTORIA REAL", WHITE, 1, (30, 60, 90))
+        text_c(d, UW // 2, 10, "HISTORIA Y AVENTURAS DE", WHITE, 1, (30, 60, 90))
+        text_c(d, UW // 2, 24 + bob, "VAJTAN", GOLD, 5, (110, 40, 0))
+        text_c(d, UW // 2, 74 + bob, "EL SÚPER NENE", (255, 120, 60), 2, (80, 10, 0))
+        text_c(d, UW // 2, 102, "BASADO EN HECHOS REALES", WHITE, 1, (30, 60, 90))
         if (t < 3.8 and int(t * 2) % 2 == 0) or (t >= 3.8 and int(t * 12) % 2 == 0):
-            text_c(d, UW // 2, 440, "PRESS START", WHITE if t < 3.8 else GOLD, 1, BLK)
-        text_c(d, UW // 2, 464, "(C) 1995-2026 VAJTAN SOFT", (230, 240, 250), 1, (40, 50, 70))
+            text_c(d, UW // 2, 236, "PRESS START", WHITE if t < 3.8 else GOLD, 1, BLK)
+        text_c(d, UW // 2, 256, "(C) 1995-2026 VAJTAN SOFT", (230, 240, 250), 1, (40, 50, 70))
 
 
 # ================================================================ 2. UCRANIA
@@ -660,7 +666,7 @@ class Tomelloso(Scene):
         level(d, "NIVEL 8")
         if self.idx(t) == 2:
             u_ = t - self.L[2].start
-            bubble(d, 20, 290, 90, 50)
+            bubble(d, 20, 121, 90, 50)
             icons = [["..#..", ".###.", "#####", ".###.", "..#.."],
                      ["#...#", ".###.", ".#.#.", ".###.", "#...#"],
                      [".##..", "####.", ".####", "..##.", "..#.."]]
@@ -669,7 +675,7 @@ class Tomelloso(Scene):
                 for ry, row in enumerate(icons[k]):
                     for rx, ch in enumerate(row):
                         if ch == '#':
-                            R(d, 28 + k * 27 + rx * 4, 300 + ry * 4 + (k % 2) * 6, 4, 4, cols[k])
+                            R(d, 28 + k * 27 + rx * 4, 131 + ry * 4 + (k % 2) * 6, 4, 4, cols[k])
 
 
 # ================================================================ 6. KICKBOXING 8.5
@@ -779,7 +785,7 @@ class KickGym(Scene):
             if h <= t:
                 last = h
         if last is not None and t - last < 0.15:
-            text(d, 196, 300, "POW!", GOLD, 2, BLK)
+            text(d, 170, 131, "POW!", GOLD, 2, BLK)
 
 
 # ================================================================ 7. PARKOUR 12
@@ -1170,12 +1176,12 @@ class ArtSchool(Scene):
         level(d, "NIVEL 17-19")
         i = self.idx(t)
         if i >= 1:
-            bubble(d, 128, 200, 70, 50)
+            bubble(d, 128, 132, 70, 50)
             x = 140 + (t * 30) % 46
-            y = 222 - abs(math.sin(t * 5)) * 12
+            y = 154 - abs(math.sin(t * 5)) * 12
             R(d, x, y, 3, 6, (40, 40, 60))
             R(d, x, y - 3, 3, 3, (234, 180, 142))
-            R(d, 132, 234, 62, 2, (120, 120, 130))
+            R(d, 132, 166, 62, 2, (120, 120, 130))
         if i == 2:
             panel(d, 8, 44, 118, 40)
             text(d, 12, 45, "KICKBOXING", WHITE)
@@ -1272,8 +1278,8 @@ class Business(Scene):
         for k in range(60):
             R(d, 34 + rnd.randint(0, 128), 120 + rnd.randint(0, 84), 2, 2, (250, 210, 110))
         R(d, 98, 64, 4, 142, (30, 26, 36))
-        R(d, 250, 70, 60, 60, (240, 240, 230))
-        d.ellipse([254, 74, 306, 126], fill=(250, 250, 244))
+        R(d, 250, 190, 60, 60, (240, 240, 230))
+        d.ellipse([254, 194, 306, 246], fill=(250, 250, 244))
         R(d, 0, 440, AW, 10, (120, 84, 56))
         R(d, 0, 440, AW, 2, (160, 120, 80))
         R(d, 10, 450, 6, 90, (100, 70, 46))
@@ -1282,8 +1288,8 @@ class Business(Scene):
 
     def draw(self, art, d, t):
         a = t * 8
-        d.line([(280, 100), (280 + math.cos(a) * 20, 100 + math.sin(a) * 20)], fill=BLK, width=2)
-        d.line([(280, 100), (280 + math.cos(a / 12) * 13, 100 + math.sin(a / 12) * 13)], fill=BLK, width=2)
+        d.line([(280, 220), (280 + math.cos(a) * 20, 220 + math.sin(a) * 20)], fill=BLK, width=2)
+        d.line([(280, 220), (280 + math.cos(a / 12) * 13, 220 + math.sin(a / 12) * 13)], fill=BLK, width=2)
         i = self.idx(t)
         on = i == 0 or t < self.L[1].start + 0.8
         for k, mx in enumerate((150, 210, 270)):
@@ -1583,7 +1589,7 @@ class Refuge(Scene):
             for k in range(int(u_ / 0.8)):
                 a = u_ - k * 0.8
                 if a < 1.6:
-                    text(d, 150 + (k % 3) * 22 - 40, 300 - a * 30, "+1 CLIENTE", GOLD, 1, BLK)
+                    text(d, 150 + (k % 3) * 22 - 40, 131 - a * 30, "+1 CLIENTE", GOLD, 1, BLK)
         if i == 3:
             u_ = t - self.L[3].start
             panel(d, 30, 60, 210, 150, (240, 240, 244))
@@ -1776,6 +1782,7 @@ class Ending(Scene):
     lines = [('VAJTAN ADULTO', "Llegué con 8 años. Hoy, 23 años después, esta es mi casa."),
              ('VAJTAN ADULTO', "Ucrania, Georgia y España en el corazón. Y esta historia... continúa.")]
     post = 5.0
+    SH = 110
 
     def setup(self):
         self.bg = cliff_bg()
@@ -1803,9 +1810,9 @@ class Ending(Scene):
         text_c(d, UW // 2, 50, "FIN", GOLD, 5, (120, 30, 0))
         text_c(d, UW // 2, 100, "GRACIAS POR JUGAR", WHITE, 1)
         if int(v * 3) % 2 == 0:
-            text_c(d, UW // 2, 436, "¿CONTINUAR?  %d" % max(0, 9 - int(v * 2.2)), (255, 120, 60), 1, BLK)
-        text_c(d, UW // 2, 454, "BASADO EN LA VIDA DE", WHITE, 1, BLK)
-        text_c(d, UW // 2, 466, "VAJTAN SHANAVA", GOLD, 1, BLK)
+            text_c(d, UW // 2, 232, "¿CONTINUAR?  %d" % max(0, 9 - int(v * 2.2)), (255, 120, 60), 1, BLK)
+        text_c(d, UW // 2, 250, "HISTORIA Y AVENTURAS DE", WHITE, 1, BLK)
+        text_c(d, UW // 2, 262, "VAJTAN, EL SÚPER NENE", GOLD, 1, BLK)
 
 
 SCENES = [Title(), Ukraine(), Farewell(), Journey(), Tomelloso(), KickGym(), Parkour12(), Accident(), Halo(),
@@ -1876,6 +1883,13 @@ def plan():
 def compose(sc, t):
     art, ui = sc.render(t)
     a = np.asarray(art)
+    if sc.SH:
+        b = np.empty_like(a)
+        b[:AH - sc.SH] = a[sc.SH:]
+        b[AH - sc.SH:] = NAVY
+        b[AH - sc.SH:AH - sc.SH + 2] = (70, 80, 140)
+        b[AH - sc.SH + 2:AH - sc.SH + 3] = (30, 36, 70)
+        a = b
     dx, dy = sc.shake(t)
     if dx or dy:
         a = np.roll(np.roll(a, dy, 0), dx, 1)
