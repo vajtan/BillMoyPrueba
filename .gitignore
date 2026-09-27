@@ -13,3 +13,6 @@ video/v6/node_modules/
 video/v6/render.log
 video/v6/_audio.wav
 video/v6/preview/
+video/v7/_*
+video/v7/preview/
+video/v7/*.log
